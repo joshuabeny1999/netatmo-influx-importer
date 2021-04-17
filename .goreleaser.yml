@@ -6,6 +6,8 @@ builds:
   - CGO_ENABLED=0
   goos:
     - linux
+    - darwin
+    - windows
   ldflags: -X "github.com/joshuabeny1999/netatmo-influx-importer/cmd.version={{.Version}}" -X "github.com/joshuabeny1999/netatmo-influx-importer/cmd.commit={{.Commit}}" -X "github.com/joshuabeny1999/netatmo-influx-importer/cmd.date={{.Date}}"
 archives:
 - replacements:

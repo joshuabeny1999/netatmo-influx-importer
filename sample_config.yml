@@ -1,0 +1,13 @@
+# Create a Netatmo developer account and fill in here the details:
+netatmo:
+  client_id: NETATMO_CLIENT_ID
+  client_secret: NETATMO_CLIENT_SECRET
+  username: user@example.com
+  password: mypassword
+
+# Fill in here influx details
+influx:
+  url: http://localhost:8086
+  token: my-token
+  bucket: my-bucket
+  org: my-org

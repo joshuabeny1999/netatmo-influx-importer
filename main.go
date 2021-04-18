@@ -7,8 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/ilyakaznacheev/cleanenv"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+
+	"github.com/ilyakaznacheev/cleanenv"
 	netatmo "github.com/joshuabeny1999/netatmo-api-go"
 )
 
@@ -44,6 +45,7 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 	client := influxdb2.NewClient(cfg.Influx.Url, cfg.Influx.Token)
+	writeAPI := client.WriteAPI(cfg.Influx.Org, cfg.Influx.Bucket)
 	// always close client at the end
 	defer client.Close()
 
@@ -62,35 +64,39 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	ct := time.Now().UTC().Unix()
 	for _, station := range dc.Stations() {
-
-		fmt.Printf("Station : %s\n", station.StationName)
-		fmt.Printf("Station Location Information: %s %s %s %f %f\n", station.Place.City, station.Place.Country, station.Place.Timezone, station.Place.Location.Longitude, station.Place.Location.Latitude)
-
-		
-
 		for _, module := range station.Modules() {
-			fmt.Printf("\tModule : %s\n", module.ModuleName)
+			if module.DashboardData.LastMeasure == nil {
+				fmt.Printf("\t\tSkipping %s, no measurement data available.\n", module.ModuleName)
+				continue
+			}
+			ts, data := module.Info()
+			p := influxdb2.NewPointWithMeasurement("city").AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", station.Place.City).SetTime(time.Unix(ts, 0))
+			writeAPI.WritePoint(p)
+			p = influxdb2.NewPointWithMeasurement("country").AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", station.Place.Country).SetTime(time.Unix(ts, 0))
+			writeAPI.WritePoint(p)
+			p = influxdb2.NewPointWithMeasurement("timezone").AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", station.Place.Timezone).SetTime(time.Unix(ts, 0))
+			writeAPI.WritePoint(p)
+			p = influxdb2.NewPointWithMeasurement("longitude").AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", *station.Place.Location.Longitude).SetTime(time.Unix(ts, 0))
+			writeAPI.WritePoint(p)
+			p = influxdb2.NewPointWithMeasurement("latitude").AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", *station.Place.Location.Latitude).SetTime(time.Unix(ts, 0))
+			writeAPI.WritePoint(p)
+			p = influxdb2.NewPointWithMeasurement("altitude").AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", *station.Place.Altitude).SetTime(time.Unix(ts, 0))
+			writeAPI.WritePoint(p)
 
-			{
-				if module.DashboardData.LastMeasure == nil {
-					fmt.Printf("\t\tSkipping %s, no measurement data available.\n", module.ModuleName)
-					continue
-				}
-				ts, data := module.Info()
-				for dataName, value := range data {
-					fmt.Printf("\t\t%s : %v (updated %ds ago, %d)\n", dataName, value, ct-ts, ts)
-				}
+			for dataName, value := range data {
+				p = influxdb2.NewPointWithMeasurement(dataName).AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", value).SetTime(time.Unix(ts, 0))
+				writeAPI.WritePoint(p)
 			}
 
-			{
-				ts, data := module.Data()
-				for dataName, value := range data {
-					fmt.Printf("\t\t%s : %v (updated %ds ago, %d)\n", dataName, value, ct-ts, ts)
-				}
+
+			ts, data = module.Data()
+			for dataName, value := range data {
+				p = influxdb2.NewPointWithMeasurement(dataName).AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", value).SetTime(time.Unix(ts, 0))
+				writeAPI.WritePoint(p)
 			}
 		}
+		writeAPI.Flush()
 	}
 
 	return nil

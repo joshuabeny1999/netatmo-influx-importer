@@ -5,8 +5,12 @@ Go CLI which can be run as cron to import netatmo data into influx 2.0 database.
 You need to follow following steps:
 - [Create a new netatmo app](https://dev.netatmo.com/dev/createapp)
 - Optional: Create a seperate Bucket and Token for adding the netatmo data to it.
-- Place the script somewhere on your server.
-- Create a ```config.yml``` in the same folder of the script with Influx and Netatmo configuration (See also ```sample_config.yml```):
+- Place the script somewhere on your server. 
+1. Download and Upload program to your Server. You find it under [Releases](https://github.com/joshuabeny1999/netatmo-influx-importer/releases/latest) (Check your ARM architecture with `dpkg --print-architecture`) 
+2. Untar it where you want it: `tar -xvzf netatmo-influx-importer_x.y.z_Linux_amd64.tar.gz`
+3. Make it executeable: `chmod +x netatmo-influx-importer`
+
+- Create a ```config.yml``` in the same folder of the program with Influx and Netatmo configuration (See also ```sample_config.yml```):
 ```yml
 # Create a Netatmo developer account and fill in here the details:
 netatmo:

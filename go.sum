@@ -134,6 +134,8 @@ github.com/joshuabeny1999/netatmo-api-go v0.0.0-20210418165009-7d766a66d715 h1:k
 github.com/joshuabeny1999/netatmo-api-go v0.0.0-20210418165009-7d766a66d715/go.mod h1:gLFb8HVQQSpxCgO8zldcl7V8hk8eWt+4vQGCvutuwRk=
 github.com/joshuabeny1999/netatmo-api-go v0.0.0-20210418203917-d15661c90e3d h1:Fua04c43SkBkt9FYYwoTZrFPsvAhKB6fuQLthVzNdRQ=
 github.com/joshuabeny1999/netatmo-api-go v0.0.0-20210418203917-d15661c90e3d/go.mod h1:gLFb8HVQQSpxCgO8zldcl7V8hk8eWt+4vQGCvutuwRk=
+github.com/joshuabeny1999/netatmo-api-go v0.0.0-20210418205740-9dc3f85ce39a h1:iuPqljrLoQEo3Cr2jsCOqgQBqrvbRKFbileEiiuL/C8=
+github.com/joshuabeny1999/netatmo-api-go v0.0.0-20210418205740-9dc3f85ce39a/go.mod h1:gLFb8HVQQSpxCgO8zldcl7V8hk8eWt+4vQGCvutuwRk=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=

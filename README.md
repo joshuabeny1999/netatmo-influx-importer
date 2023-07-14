@@ -4,6 +4,7 @@ Go CLI which can be run as cron to import netatmo data into influx 2.0 database.
 ## Usage
 You need to follow following steps:
 - [Create a new netatmo app](https://dev.netatmo.com/dev/createapp)
+- Generate a new token using the token generator. Scope needed is `read_station`: ![token_generator_netatmo.png](token_generator_netatmo.png)
 - Optional: Create a seperate Bucket and Token for adding the netatmo data to it.
 - Place the script somewhere on your server. 
 1. Download and Upload program to your Server. You find it under [Releases](https://github.com/joshuabeny1999/netatmo-influx-importer/releases/latest) (Check your ARM architecture with `dpkg --print-architecture`) 
@@ -16,8 +17,7 @@ You need to follow following steps:
 netatmo:
   client_id: NETATMO_CLIENT_ID
   client_secret: NETATMO_CLIENT_SECRET
-  username: NETATMO_USERNAME
-  password: NETATMO_PASSWORD
+  refresh_token: NETATMO_REFRESH_TOKEN
 
 # Fill in here influx details
 influx:

@@ -10,15 +10,14 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	netatmo "github.com/joshuabeny1999/netatmo-api-go"
+	netatmo "github.com/joshuabeny1999/netatmo-api-go/v2"
 )
 
 type Config struct {
 	Netatmo struct {
 		ClientId     string `yaml:"client_id" env:"NETATMO_INFLUX_IMPORTER_NETATMO_CLIENT_ID"`
 		ClientSecret string `yaml:"client_secret" env:"NETATMO_INFLUX_IMPORTER_NETATMO_CLIENT_SECRET"`
-		Username     string `yaml:"username" env:"NETATMO_INFLUX_IMPORTER_NETATMO_USERNAME"`
-		Password     string `yaml:"password" env:"NETATMO_INFLUX_IMPORTER_NETATMO_PASSWORD"`
+		RefreshToken string `yaml:"refresh_token" env:"NETATMO_INFLUX_IMPORTER_NETATMO_REFRESH_TOKEN"`
 	} `yaml:"netatmo"`
 	Influx struct {
 		Url    string `yaml:"url" env:"NETATMO_INFLUX_IMPORTER_INFLUX_URL" env-default:"http://localhost:8086`
@@ -52,8 +51,7 @@ func run(args []string, stdout io.Writer) error {
 	n, err := netatmo.NewClient(netatmo.Config{
 		ClientID:     cfg.Netatmo.ClientId,
 		ClientSecret: cfg.Netatmo.ClientSecret,
-		Username:     cfg.Netatmo.Username,
-		Password:     cfg.Netatmo.Password,
+		RefreshToken: cfg.Netatmo.RefreshToken,
 	})
 	if err != nil {
 		return err
@@ -88,7 +86,6 @@ func run(args []string, stdout io.Writer) error {
 				p = influxdb2.NewPointWithMeasurement(dataName).AddTag("station", station.StationName).AddTag("module", module.ModuleName).AddField("value", value).SetTime(time.Unix(ts, 0))
 				writeAPI.WritePoint(p)
 			}
-
 
 			ts, data = module.Data()
 			for dataName, value := range data {

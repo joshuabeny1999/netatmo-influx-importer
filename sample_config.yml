@@ -2,8 +2,7 @@
 netatmo:
   client_id: NETATMO_CLIENT_ID
   client_secret: NETATMO_CLIENT_SECRET
-  username: user@example.com
-  password: mypassword
+  refresh_token: NETATMO_REFRESH_TOKEN
 
 # Fill in here influx details
 influx:

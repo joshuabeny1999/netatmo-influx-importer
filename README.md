@@ -33,3 +33,8 @@ influx:
 ```
 
 > :information_source: With the argument ```--config``` you could provide the path to the config file if you place it elsewhere on the server.
+
+## Breaking Change December 2023
+Netatmo invalidated all refresh token and generated a new one on each request. Therefore please make sure config file is writeable by the user running the script, so it can update the refresh token if it changed.
+
+You need to regenarate your token and update your configuration file to get it working again if it broke on your side.

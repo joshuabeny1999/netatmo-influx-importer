@@ -8,22 +8,22 @@ import (
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"gopkg.in/yaml.v2"
 
-	"github.com/ilyakaznacheev/cleanenv"
 	netatmo "github.com/joshuabeny1999/netatmo-api-go/v2"
 )
 
 type Config struct {
 	Netatmo struct {
-		ClientId     string `yaml:"client_id" env:"NETATMO_INFLUX_IMPORTER_NETATMO_CLIENT_ID"`
-		ClientSecret string `yaml:"client_secret" env:"NETATMO_INFLUX_IMPORTER_NETATMO_CLIENT_SECRET"`
-		RefreshToken string `yaml:"refresh_token" env:"NETATMO_INFLUX_IMPORTER_NETATMO_REFRESH_TOKEN"`
+		ClientID     string `yaml:"client_id"`
+		ClientSecret string `yaml:"client_secret"`
+		RefreshToken string `yaml:"refresh_token"`
 	} `yaml:"netatmo"`
 	Influx struct {
-		Url    string `yaml:"url" env:"NETATMO_INFLUX_IMPORTER_INFLUX_URL" env-default:"http://localhost:8086`
-		Token  string `yaml:"token" env:"NETATMO_INFLUX_IMPORTER_INFLUX_TOKEN" env-default:"my-token`
-		Bucket string `yaml:"bucket" env:"NETATMO_INFLUX_IMPORTER_INFLUX_BUCKET" env-default:"my-bucket`
-		Org    string `yaml:"org" env:"NETATMO_INFLUX_IMPORTER_INFLUX_ORG" env-default:"my-org`
+		URL    string `yaml:"url"`
+		Token  string `yaml:"token"`
+		Bucket string `yaml:"bucket"`
+		Org    string `yaml:"org"`
 	} `yaml:"influx"`
 }
 
@@ -40,21 +40,41 @@ func run(args []string, stdout io.Writer) error {
 	configFilename := flag.String("config", "config.yml", "configuration file to parse'")
 	flag.Parse()
 
-	if err := cleanenv.ReadConfig(*configFilename, &cfg); err != nil {
+	data, err := os.ReadFile(*configFilename)
+	if err != nil {
 		return err
 	}
-	client := influxdb2.NewClient(cfg.Influx.Url, cfg.Influx.Token)
+	err = yaml.Unmarshal(data, &cfg)
+	if err != nil {
+		return err
+	}
+
+	client := influxdb2.NewClient(cfg.Influx.URL, cfg.Influx.Token)
 	writeAPI := client.WriteAPI(cfg.Influx.Org, cfg.Influx.Bucket)
 	// always close client at the end
 	defer client.Close()
 
 	n, err := netatmo.NewClient(netatmo.Config{
-		ClientID:     cfg.Netatmo.ClientId,
+		ClientID:     cfg.Netatmo.ClientID,
 		ClientSecret: cfg.Netatmo.ClientSecret,
 		RefreshToken: cfg.Netatmo.RefreshToken,
 	})
 	if err != nil {
 		return err
+	}
+
+	if cfg.Netatmo.RefreshToken != n.RefreshToken {
+		cfg.Netatmo.RefreshToken = n.RefreshToken
+
+		// Speichern Sie die Konfiguration zurück in die Datei
+		data, err = yaml.Marshal(&cfg)
+		if err != nil {
+			return err
+		}
+		err = os.WriteFile("config.yaml", data, 0644)
+		if err != nil {
+			return err
+		}
 	}
 
 	dc, err := n.Read()

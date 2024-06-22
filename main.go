@@ -75,7 +75,7 @@ func run(args []string, stdout io.Writer) error {
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile("config.yaml", data, 0644)
+		err = os.WriteFile(*configFilename, data, 0644)
 		if err != nil {
 			return err
 		}
@@ -85,12 +85,11 @@ func run(args []string, stdout io.Writer) error {
 		cfg.Netatmo.AccessToken = n.AccessToken
 		cfg.Netatmo.TokenValidUntil = n.TokenValidUntil
 
-		// Speichern Sie die Konfiguration zurück in die Datei
 		data, err = yaml.Marshal(&cfg)
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile("config.yaml", data, 0644)
+		err = os.WriteFile(*configFilename, data, 0644)
 		if err != nil {
 			return err
 		}

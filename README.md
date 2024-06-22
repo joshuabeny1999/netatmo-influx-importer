@@ -18,6 +18,8 @@ netatmo:
   client_id: NETATMO_CLIENT_ID
   client_secret: NETATMO_CLIENT_SECRET
   refresh_token: NETATMO_REFRESH_TOKEN
+  access_token: NETATMO_ACCESS_TOKEN
+  token_valid_until: 2024-06-22T13:39:21.200055+02:00
 
 # Fill in here influx details
 influx:
@@ -38,3 +40,7 @@ influx:
 Netatmo invalidated all refresh token and generated a new one on each request. Therefore please make sure config file is writeable by the user running the script, so it can update the refresh token if it changed.
 
 You need to regenarate your token and update your configuration file to get it working again if it broke on your side.
+
+## New June 2024
+Netatmo seems to have an issue with too often refresh token requests. Therefore the access token is now also stored in the config with the valid until date. The script will now only request a new token if the current one is expired.
+If you encounter this issue, update to the latest release, generate new tokens and update your config file.

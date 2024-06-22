@@ -15,9 +15,11 @@ import (
 
 type Config struct {
 	Netatmo struct {
-		ClientID     string `yaml:"client_id"`
-		ClientSecret string `yaml:"client_secret"`
-		RefreshToken string `yaml:"refresh_token"`
+		ClientID        string    `yaml:"client_id"`
+		ClientSecret    string    `yaml:"client_secret"`
+		AccessToken     string    `yaml:"access_token"`
+		TokenValidUntil time.Time `yaml:"token_valid_until"`
+		RefreshToken    string    `yaml:"refresh_token"`
 	} `yaml:"netatmo"`
 	Influx struct {
 		URL    string `yaml:"url"`
@@ -55,9 +57,11 @@ func run(args []string, stdout io.Writer) error {
 	defer client.Close()
 
 	n, err := netatmo.NewClient(netatmo.Config{
-		ClientID:     cfg.Netatmo.ClientID,
-		ClientSecret: cfg.Netatmo.ClientSecret,
-		RefreshToken: cfg.Netatmo.RefreshToken,
+		ClientID:        cfg.Netatmo.ClientID,
+		ClientSecret:    cfg.Netatmo.ClientSecret,
+		RefreshToken:    cfg.Netatmo.RefreshToken,
+		AccessToken:     cfg.Netatmo.AccessToken,
+		TokenValidUntil: cfg.Netatmo.TokenValidUntil,
 	})
 	if err != nil {
 		return err
@@ -65,6 +69,21 @@ func run(args []string, stdout io.Writer) error {
 
 	if cfg.Netatmo.RefreshToken != n.RefreshToken {
 		cfg.Netatmo.RefreshToken = n.RefreshToken
+
+		// Speichern Sie die Konfiguration zurück in die Datei
+		data, err = yaml.Marshal(&cfg)
+		if err != nil {
+			return err
+		}
+		err = os.WriteFile("config.yaml", data, 0644)
+		if err != nil {
+			return err
+		}
+	}
+
+	if cfg.Netatmo.AccessToken != n.AccessToken {
+		cfg.Netatmo.AccessToken = n.AccessToken
+		cfg.Netatmo.TokenValidUntil = n.TokenValidUntil
 
 		// Speichern Sie die Konfiguration zurück in die Datei
 		data, err = yaml.Marshal(&cfg)

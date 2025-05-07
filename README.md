@@ -1,46 +1,66 @@
 # netatmo-influx-importer
-Go CLI which can be run as cron to import netatmo data into influx 2.0 database.
+
+**Go CLI** for cron-driven import of Netatmo weather station data into InfluxDB 2.x.
 
 ## Usage
-You need to follow following steps:
-- [Create a new netatmo app](https://dev.netatmo.com/apps/createanapp#form)
-- Generate a new token using the token generator. Scope needed is `read_station`: ![token_generator_netatmo.png](token_generator_netatmo.png)
-- Optional: Create a seperate Bucket and Token for adding the netatmo data to it.
-- Place the script somewhere on your server. 
-1. Download and Upload program to your Server. You find it under [Releases](https://github.com/joshuabeny1999/netatmo-influx-importer/releases/latest) (Check your ARM architecture with `dpkg --print-architecture`) 
-2. Untar it where you want it: `tar -xvzf netatmo-influx-importer_x.y.z_Linux_amd64.tar.gz`
-3. Make it executeable: `chmod +x netatmo-influx-importer`
 
-- Create a ```config.yml``` in the same folder of the program with Influx and Netatmo configuration (See also ```sample_config.yml```):
-```yml
-# Create a Netatmo developer account and fill in here the details:
-netatmo:
-  client_id: NETATMO_CLIENT_ID
-  client_secret: NETATMO_CLIENT_SECRET
-  refresh_token: NETATMO_REFRESH_TOKEN
-  access_token: NETATMO_ACCESS_TOKEN
-  token_valid_until: 2024-06-22T13:39:21.200055+02:00
+1. **Install**
+    - Download the latest release from GitHub Releases:  
+      https://github.com/joshuabeny1999/netatmo-influx-importer/releases/latest
+    - Extract the binary: `tar -xvzf netatmo-influx-importer_x.y.z_Linux_amd64.tar.gz`
+    - Make executable: `chmod +x netatmo-influx-importer`
 
-# Fill in here influx details
-influx:
-  url: http://localhost:8086
-  token: my-token
-  bucket: my-bucket
-  org: my-org
-```
-- Add a cronjob  to run script regulary (Recommended every 5 minute)
-```
-# cat /etc/cron.d/netatmo
-*/5 * * * * root  /path/to/netatmo-influx-importer 
-```
+2. **Configuration**
 
-> :information_source: With the argument ```--config``` you could provide the path to the config file if you place it elsewhere on the server.
+   You now need two **TOML** files in the same folder as the binary (or point to them via flags):
 
-## Breaking Change December 2023
-Netatmo invalidated all refresh token and generated a new one on each request. Therefore please make sure config file is writeable by the user running the script, so it can update the refresh token if it changed.
+   ### `netatmo.toml`
+   Holds your Netatmo OAuth2 credentials & token state. The CLI will auto-refresh tokens and write back any updates. To get an Token:
+   - [Create a new netatmo app](https://dev.netatmo.com/apps/createanapp#form)
+   - Generate a new token using the token generator. Scope needed is `read_station`: ![token_generator_netatmo.png](token_generator_netatmo.png)
 
-You need to regenarate your token and update your configuration file to get it working again if it broke on your side.
+      ```toml
+      client_id         = "YOUR_NETATMO_CLIENT_ID"
+      client_secret     = "YOUR_NETATMO_CLIENT_SECRET"
+      access_token      = "YOUR_CURRENT_ACCESS_TOKEN"
+      refresh_token     = "YOUR_CURRENT_REFRESH_TOKEN"
+      token_valid_until = 2025-05-07T15:04:05Z
+      ```
 
-## New June 2024
-Netatmo seems to have an issue with too often refresh token requests. Therefore the access token is now also stored in the config with the valid until date. The script will now only request a new token if the current one is expired.
-If you encounter this issue, update to the latest release, generate new tokens and update your config file.
+      ### `influx.toml`
+      InfluxDB connection parameters.
+      ```toml
+      url    = "http://localhost:8086"
+      token  = "YOUR_INFLUXDB_TOKEN"
+      bucket = "YOUR_BUCKET"
+      org    = "YOUR_ORG"
+      ```
+
+3. **Run**
+
+   ```sh
+   # default file names netatmo.toml & influx.toml
+   ./netatmo-influx-importer
+
+   # specify custom paths
+   ./netatmo-influx-importer \
+     --netatmo-config /path/to/netatmo.toml \
+     --influx-config /path/to/influx.toml
+   ```
+
+4. **Schedule via cron** (every 5 minutes recommended)
+
+   ```cron
+   */5 * * * * /full/path/to/netatmo-influx-importer
+   ```
+
+## Background & History
+
+- **Dec 2023**: Netatmo rolled refresh tokens on every request. Make sure the config file is writable so new tokens persist.
+- **Jun 2024**: Added token expiration check to avoid over-refresh.
+- **May 2025**: Moved Netatmo config handling into the Go API; switched config formats from YAML to TOML for simpler, unambiguous parsing.
+
+## Troubleshooting
+
+- **Permission errors** writing `netatmo.toml`? Ensure the user running the cron job has write access to that file.
+- **Invalid tokens**? Regenerate your Netatmo tokens (via the developer token generator with `read_station` scope) and update `netatmo.toml`.

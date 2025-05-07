@@ -1,17 +1,16 @@
 module github.com/joshuabeny1999/netatmo-influx-importer
 
-go 1.21
+go 1.23.0
 
-toolchain go1.21.3
+toolchain go1.24.2
 
 require (
+	github.com/BurntSushi/toml v1.5.0
 	github.com/influxdata/influxdb-client-go/v2 v2.12.4
-	github.com/joshuabeny1999/netatmo-api-go/v2 v2.0.0-20240622090343-a8f7bda73fb8
-	gopkg.in/yaml.v2 v2.4.0
+	github.com/joshuabeny1999/netatmo-api-go/v2 v2.0.0-20250507080719-3dd9f9d51b17
 )
 
 require (
-	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/CloudyKit/jet/v6 v6.2.0 // indirect
 	github.com/Joker/jade v1.1.3 // indirect
@@ -78,7 +77,7 @@ require (
 	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
 	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/oauth2 v0.21.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect

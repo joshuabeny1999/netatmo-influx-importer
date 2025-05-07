@@ -1,3 +1,5 @@
 netatmo-influx-importer.exe
-config.yml
+.gitignore
 dist/
+netatmo.toml
+influx.toml

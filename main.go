@@ -7,99 +7,60 @@ import (
 	"os"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"gopkg.in/yaml.v2"
-
 	netatmo "github.com/joshuabeny1999/netatmo-api-go/v2"
 )
 
-type Config struct {
-	Netatmo struct {
-		ClientID        string    `yaml:"client_id"`
-		ClientSecret    string    `yaml:"client_secret"`
-		AccessToken     string    `yaml:"access_token"`
-		TokenValidUntil time.Time `yaml:"token_valid_until"`
-		RefreshToken    string    `yaml:"refresh_token"`
-	} `yaml:"netatmo"`
-	Influx struct {
-		URL    string `yaml:"url"`
-		Token  string `yaml:"token"`
-		Bucket string `yaml:"bucket"`
-		Org    string `yaml:"org"`
-	} `yaml:"influx"`
+// InfluxConfig holds InfluxDB connection parameters.
+type InfluxConfig struct {
+	URL    string `toml:"url"`
+	Token  string `toml:"token"`
+	Bucket string `toml:"bucket"`
+	Org    string `toml:"org"`
 }
 
 func main() {
-	if err := run(os.Args, os.Stdout); err != nil {
+	if err := run(os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(args []string, stdout io.Writer) error {
-	var cfg Config
-
-	configFilename := flag.String("config", "config.yml", "configuration file to parse'")
+func run(stdout io.Writer) error {
+	// Flags for separate TOML config files
+	influxCfgPath := flag.String("influx-config", "influx.toml", "InfluxDB configuration file (TOML)")
+	netatmoCfgPath := flag.String("netatmo-config", "netatmo.toml", "Netatmo configuration file (TOML)")
 	flag.Parse()
 
-	data, err := os.ReadFile(*configFilename)
+	// Load InfluxDB configuration
+	var influxCfg InfluxConfig
+	if _, err := toml.DecodeFile(*influxCfgPath, &influxCfg); err != nil {
+		return fmt.Errorf("failed to decode InfluxDB config %q: %w", *influxCfgPath, err)
+	}
+
+	// Initialize InfluxDB client
+	influxClient := influxdb2.NewClient(influxCfg.URL, influxCfg.Token)
+	writeAPI := influxClient.WriteAPI(influxCfg.Org, influxCfg.Bucket)
+	defer influxClient.Close()
+
+	// Load Netatmo configuration and client
+	nmCfg, err := netatmo.LoadConfig(*netatmoCfgPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load Netatmo config %q: %w", *netatmoCfgPath, err)
 	}
-	err = yaml.Unmarshal(data, &cfg)
+	client, err := netatmo.NewClient(nmCfg)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to initialize Netatmo client: %w", err)
 	}
 
-	client := influxdb2.NewClient(cfg.Influx.URL, cfg.Influx.Token)
-	writeAPI := client.WriteAPI(cfg.Influx.Org, cfg.Influx.Bucket)
-	// always close client at the end
-	defer client.Close()
-
-	n, err := netatmo.NewClient(netatmo.Config{
-		ClientID:        cfg.Netatmo.ClientID,
-		ClientSecret:    cfg.Netatmo.ClientSecret,
-		RefreshToken:    cfg.Netatmo.RefreshToken,
-		AccessToken:     cfg.Netatmo.AccessToken,
-		TokenValidUntil: cfg.Netatmo.TokenValidUntil,
-	})
+	// Fetch Netatmo data
+	dc, err := client.Read()
 	if err != nil {
-		return err
+		return fmt.Errorf("Netatmo Read error: %w", err)
 	}
 
-	if cfg.Netatmo.RefreshToken != n.RefreshToken {
-		cfg.Netatmo.RefreshToken = n.RefreshToken
-
-		// Speichern Sie die Konfiguration zurück in die Datei
-		data, err = yaml.Marshal(&cfg)
-		if err != nil {
-			return err
-		}
-		err = os.WriteFile(*configFilename, data, 0644)
-		if err != nil {
-			return err
-		}
-	}
-
-	if cfg.Netatmo.AccessToken != n.AccessToken {
-		cfg.Netatmo.AccessToken = n.AccessToken
-		cfg.Netatmo.TokenValidUntil = n.TokenValidUntil
-
-		data, err = yaml.Marshal(&cfg)
-		if err != nil {
-			return err
-		}
-		err = os.WriteFile(*configFilename, data, 0644)
-		if err != nil {
-			return err
-		}
-	}
-
-	dc, err := n.Read()
-	if err != nil {
-		return err
-	}
-
+	// Iterate stations and modules, write to InfluxDB
 	for _, station := range dc.Stations() {
 		for _, module := range station.Modules() {
 			if module.DashboardData.LastMeasure == nil {

@@ -1,0 +1,5 @@
+client_id         = "YOUR_NETATMO_CLIENT_ID"
+client_secret     = "YOUR_NETATMO_CLIENT_SECRET"
+access_token      = "YOUR_CURRENT_ACCESS_TOKEN"
+refresh_token     = "YOUR_CURRENT_REFRESH_TOKEN"
+token_valid_until = 2025-05-07T15:04:05Z
